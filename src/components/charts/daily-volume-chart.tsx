@@ -36,8 +36,8 @@ export function DailyVolumeChart({ daily }: { daily: OrderStats['daily'] }) {
       <div className="mb-4">
         <Legend
           items={[
-            { label: 'Task Done', color: CREATED },
-            { label: 'Task Target', color: DELIVERED, icon: STATUS_META.delivered.icon },
+            { label: 'Created', color: CREATED },
+            { label: 'Delivered', color: DELIVERED, icon: STATUS_META.delivered.icon },
           ]}
         />
       </div>

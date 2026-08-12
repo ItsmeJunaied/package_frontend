@@ -1,35 +1,22 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import {
   Bell,
-  Calendar,
   ChevronDown,
   LayoutDashboard,
   LogOut,
-  MessageSquare,
-  MoreVertical,
   PackageSearch,
-  Plus,
   Search,
   Settings,
   Truck,
-  Users,
 } from 'lucide-react';
 
 import { cn } from '@/lib/cn';
 import { useAuth } from '@/hooks/use-auth';
 
 const NAV = [
-  { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, badge: 4 },
-  { to: '/orders', label: 'Project', icon: PackageSearch, badge: 1 },
-  { to: '/courier', label: 'People', icon: Users },
-  { to: '/messages', label: 'Messages', icon: MessageSquare },
-  { to: '/calendar', label: 'Calendar', icon: Calendar },
-];
-
-const WORKSPACES = [
-  { name: 'Pertamina', color: '#2f6bff', active: true },
-  { name: 'SCBD Tower', color: '#f04452' },
-  { name: 'Bets Hotel', color: '#f5a623' },
+  { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/orders', label: 'Orders', icon: PackageSearch },
+  { to: '/courier', label: 'Courier', icon: Truck },
 ];
 
 /** First letters of a name, for the avatar chip. */
@@ -69,7 +56,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </p>
 
           <nav className="space-y-0.5">
-            {NAV.map(({ to, label, icon: Icon, badge }) => (
+            {NAV.map(({ to, label, icon: Icon }) => (
               <NavLink
                 key={to}
                 to={to}
@@ -83,58 +70,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               >
                 <Icon className="size-[18px]" aria-hidden />
                 <span className="flex-1">{label}</span>
-                {badge != null && (
-                  <span
-                    className={cn(
-                      'grid size-5 place-items-center rounded-md text-[10px] font-semibold',
-                      'bg-white/10 text-white',
-                    )}
-                  >
-                    {badge}
-                  </span>
-                )}
               </NavLink>
             ))}
           </nav>
         </div>
 
-        {/* Workspace Section */}
-        <div className="mt-6 px-4">
-          <div className="mb-2 flex items-center justify-between px-2">
-            <p className="text-[10px] font-semibold tracking-[0.12em] text-fog-dim uppercase">
-              Workspace
-            </p>
-            <button
-              type="button"
-              className="grid size-5 place-items-center rounded-md bg-accent/20 text-accent transition-colors hover:bg-accent/30"
-            >
-              <Plus className="size-3" />
-            </button>
-          </div>
-
-          <ul className="space-y-0.5">
-            {WORKSPACES.map((ws) => (
-              <li key={ws.name}>
-                <button
-                  type="button"
-                  className={cn(
-                    'flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[13px] transition-colors',
-                    ws.active
-                      ? 'bg-slate-raised text-ink'
-                      : 'text-fog hover:bg-sidebar-hover hover:text-ink',
-                  )}
-                >
-                  <span
-                    className="size-2 shrink-0 rounded-full"
-                    style={{ backgroundColor: ws.color }}
-                  />
-                  <span className="flex-1 truncate">{ws.name}</span>
-                  <MoreVertical className="size-3.5 text-fog-dim" />
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
 
         {/* Bottom Items */}
         <div className="mt-auto border-t border-hairline px-4 py-4 space-y-0.5">
