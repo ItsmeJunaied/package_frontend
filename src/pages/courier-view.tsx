@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { MapPin, Package, Search, Truck } from 'lucide-react';
 
@@ -6,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { CardSkeleton } from '@/components/ui/skeleton';
 import { EmptyState, ErrorState } from '@/components/ui/states';
 import { useOrders, useStats } from '@/api/queries';
-import { cn } from '@/lib/cn';
 import { formatRelative, formatWeight } from '@/lib/format';
 import { STATUS_META, type OrderStatus } from '@/lib/status';
 
@@ -16,10 +16,11 @@ const ACTIVE: readonly OrderStatus[] = ['pending', 'picked_up', 'in_transit', 'o
  * Resolve what someone typed to a courier the database actually knows about.
  *
  * `GET /orders?courierName=` matches the whole name — case-insensitively, but
- * with no wildcards — so "Imran" returns nothing while "imran kabir" returns
- * four rows. Rather than widen the API filter to a substring match (a contract
- * change, and one that makes "a" a valid query), the guessing happens here
- * against the real list of couriers, and only when it is unambiguous.
+ * with no wildcards — so "imran" returns nothing while "imran kabir" returns
+ * four rows. Widening the API filter to a substring match would be a contract
+ * change, and would also let a one-letter query put three couriers' runs on one
+ * screen. So the guessing happens here, against the real roster, and only when
+ * it is unambiguous.
  */
 function resolveCourier(input: string, known: readonly string[]): string {
   const q = input.trim();
@@ -50,16 +51,18 @@ function resolveCourier(input: string, known: readonly string[]): string {
 export function CourierView() {
   const [searchParams, setSearchParams] = useSearchParams();
   const courierName = searchParams.get('name') ?? '';
+  const [term, setTerm] = useState(courierName);
 
   /*
-   * The roster comes from the stats endpoint the dashboard already loads, so
-   * picking a courier is a tap rather than a spelling test. It used to be a
-   * bare text box next to a hard-coded list of three seed names, which went
-   * stale the moment anyone added an order.
+   * The roster is fetched but never rendered — it exists only so a partial or
+   * differently-cased name can be resolved to the exact string the API needs.
+   * 90 days because the dashboard's default window is a week, and a courier
+   * with nothing outstanding this week is exactly who someone might look up.
    */
-  const stats = useStats(30);
-  const roster = (stats.data?.byCourier ?? []).filter((c) => c.courierName !== 'Unassigned');
-  const names = roster.map((c) => c.courierName);
+  const roster = useStats({ days: 90 });
+  const names = (roster.data?.byCourier ?? [])
+    .filter((c) => c.courierName !== 'Unassigned')
+    .map((c) => c.courierName);
 
   const query = useOrders(
     { ...(courierName ? { courierName } : {}), limit: 50 },
@@ -67,10 +70,13 @@ export function CourierView() {
   );
 
   const assigned = (query.data?.data ?? []).filter((o) => ACTIVE.includes(o.status as OrderStatus));
-  const selected = roster.find((c) => c.courierName.toLowerCase() === courierName.toLowerCase());
+  const known = (roster.data?.byCourier ?? []).find(
+    (c) => c.courierName.toLowerCase() === courierName.toLowerCase(),
+  );
 
   const submit = (raw: string) => {
     const resolved = resolveCourier(raw, names);
+    setTerm(resolved || raw);
     const params = new URLSearchParams();
     if (resolved) params.set('name', resolved);
     setSearchParams(params, { replace: true });
@@ -92,8 +98,7 @@ export function CourierView() {
         className="flex gap-2"
         onSubmit={(e) => {
           e.preventDefault();
-          const value = new FormData(e.currentTarget).get('name');
-          submit(typeof value === 'string' ? value : '');
+          submit(term);
         }}
       >
         <div className="relative flex-1">
@@ -102,77 +107,38 @@ export function CourierView() {
             aria-hidden
           />
           <input
-            name="name"
-            list="courier-roster"
-            defaultValue={courierName}
-            placeholder="Courier name — or pick one below"
+            value={term}
+            onChange={(e) => setTerm(e.target.value)}
+            placeholder="Courier name"
             aria-label="Courier name"
-            className="h-10 w-full rounded-lg border border-hairline bg-graphite-deep pr-3 pl-9 text-sm placeholder:text-fog-dim hover:border-fog-dim focus:border-accent focus:outline-none"
+            className="h-10 w-full rounded-lg border border-hairline bg-graphite-deep pr-3 pl-9 text-sm text-ink placeholder:text-fog-dim hover:border-fog-dim focus:border-accent focus:outline-none"
           />
-          <datalist id="courier-roster">
-            {names.map((n) => (
-              <option key={n} value={n} />
-            ))}
-          </datalist>
         </div>
         <Button type="submit" variant="primary">
           Load run
         </Button>
       </form>
 
-      {/* The roster, with the outstanding count on each chip. A courier whose
-          work is all delivered reads as "0" here instead of looking like a
-          broken page after you have already picked them. */}
-      {roster.length > 0 && (
-        <ul className="flex flex-wrap gap-2">
-          {roster.map((c) => {
-            const isActive = c.courierName === courierName;
-            return (
-              <li key={c.courierName}>
-                <button
-                  type="button"
-                  onClick={() => submit(c.courierName)}
-                  aria-pressed={isActive}
-                  className={cn(
-                    'flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs transition-colors',
-                    isActive ?
-                      'border-accent bg-accent/15 text-ink'
-                    : 'border-hairline bg-slate-surface text-fog hover:border-fog-dim hover:text-ink',
-                  )}
-                >
-                  {c.courierName}
-                  <span
-                    className={cn(
-                      'rounded-full px-1.5 font-mono text-[10px] tabular-nums',
-                      c.active > 0 ? 'bg-accent/25 text-ink' : 'bg-slate-raised text-fog-dim',
-                    )}
-                  >
-                    {c.active}
-                  </span>
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      )}
-
       {!courierName ? (
         <div className="panel rounded-xl border border-hairline">
           <EmptyState
             icon={Truck}
-            title="Pick a courier"
-            description={
-              roster.length > 0 ?
-                'The number on each name is how many orders are still outstanding.'
-              : 'No couriers are assigned to any order yet.'
-            }
+            title="Search for a courier"
+            description="Type a name and load their run. A partial name works if it matches only one courier."
           />
         </div>
       ) : query.isError ? (
         <div className="panel rounded-xl border border-hairline">
           <ErrorState message={query.error.message} onRetry={() => void query.refetch()} />
         </div>
-      ) : query.isLoading ? (
+      ) : /*
+         * `isFetching`, not `isLoading`. A filter change no longer keeps the
+         * previous result on screen (see `useOrders`), so during a new search
+         * there is nothing to show — and showing the *last* courier's run under
+         * the new name was the bug: it read as "all the data came back, then
+         * corrected itself".
+         */
+      query.isLoading || query.isFetching ? (
         <div className="space-y-3">
           <CardSkeleton />
           <CardSkeleton />
@@ -186,14 +152,14 @@ export function CourierView() {
           <EmptyState
             icon={Package}
             title={
-              selected ?
-                `${selected.courierName} has nothing outstanding`
+              known ?
+                `${known.courierName} has nothing outstanding`
               : `No courier named "${courierName}"`
             }
             description={
-              selected ?
-                `Their run is clear — ${selected.delivered} delivered, ${selected.cancelled} cancelled. This view shows active work only.`
-              : 'Check the spelling, or pick a name from the list above.'
+              known ?
+                `Their run is clear — ${known.delivered} delivered, ${known.cancelled} cancelled in the last 90 days. This view shows active work only.`
+              : 'Check the spelling and try again.'
             }
           />
         </div>

@@ -22,17 +22,51 @@ export type OrderStats = InferResponseType<typeof client.orders.stats.$get, 200>
 export interface OrdersFilter {
   status?: OrderStatus;
   courierName?: string;
+  /** Free-text, matched against customer name and tracking number. */
+  q?: string;
+  /** Inclusive `createdAt` range, as `YYYY-MM-DD`. */
+  from?: string;
+  to?: string;
   page?: number;
   limit?: number;
   sort?: 'createdAt:desc' | 'createdAt:asc' | 'updatedAt:desc' | 'updatedAt:asc';
+}
+
+/** Either a rolling window of `days`, or an explicit inclusive range. */
+export interface StatsRange {
+  days?: number;
+  from?: string;
+  to?: string;
 }
 
 export const orderKeys = {
   all: ['orders'] as const,
   list: (filter: OrdersFilter) => [...orderKeys.all, 'list', filter] as const,
   detail: (id: string) => [...orderKeys.all, 'detail', id] as const,
-  stats: (days: number) => [...orderKeys.all, 'stats', days] as const,
+  stats: (range: StatsRange) => [...orderKeys.all, 'stats', range] as const,
 };
+
+/**
+ * Is this the same query as before, only on a different page?
+ *
+ * The difference decides whether the previous result may stay on screen while
+ * the next one loads. Paging: yes — the rows still belong to the same filter,
+ * and blanking the table on every page click reads as slower than it is.
+ * Filtering or searching: no — the old rows do *not* match the new filter, and
+ * showing them makes the search look like it returned everything before
+ * correcting itself.
+ */
+function sameQueryDifferentPage(a: OrdersFilter, b: OrdersFilter): boolean {
+  return (
+    a.status === b.status &&
+    a.courierName === b.courierName &&
+    a.q === b.q &&
+    a.from === b.from &&
+    a.to === b.to &&
+    a.limit === b.limit &&
+    a.sort === b.sort
+  );
+}
 
 /**
  * GET /orders/stats — the dashboard's single request.
@@ -42,10 +76,22 @@ export const orderKeys = {
  * the table outgrows one page. Because the key sits under `orderKeys.all`, any
  * mutation below invalidates the charts along with the table.
  */
-export function useStats(days = 14) {
+export function useStats(range: StatsRange = { days: 7 }) {
+  const custom = Boolean(range.from && range.to);
   return useQuery({
-    queryKey: orderKeys.stats(days),
-    queryFn: () => unwrap(client.orders.stats.$get({ query: { days: String(days) } })),
+    queryKey: orderKeys.stats(range),
+    queryFn: () =>
+      unwrap(
+        client.orders.stats.$get({
+          query:
+            custom ?
+              { from: range.from as string, to: range.to as string }
+            : { days: String(range.days ?? 7) },
+        }),
+      ),
+    // Swapping the window keeps the old numbers up for the moment it takes to
+    // fetch — the charts stay put rather than collapsing to skeletons, and
+    // every figure still belongs to one coherent window.
     placeholderData: (previous) => previous,
   });
 }
@@ -59,15 +105,20 @@ export function useOrders(filter: OrdersFilter, options?: { refetchInterval?: nu
           query: {
             ...(filter.status ? { status: filter.status } : {}),
             ...(filter.courierName ? { courierName: filter.courierName } : {}),
+            ...(filter.q ? { q: filter.q } : {}),
+            ...(filter.from ? { from: filter.from } : {}),
+            ...(filter.to ? { to: filter.to } : {}),
             page: String(filter.page ?? 1),
             limit: String(filter.limit ?? 20),
             sort: filter.sort ?? 'createdAt:desc',
           },
         }),
       ),
-    // Keeps the previous page on screen while the next one loads, instead of
-    // collapsing the table back to skeletons on every page change.
-    placeholderData: (previous) => previous,
+    placeholderData: (previous, previousQuery) => {
+      const previousFilter = previousQuery?.queryKey[2] as OrdersFilter | undefined;
+      if (!previousFilter) return undefined;
+      return sameQueryDifferentPage(previousFilter, filter) ? previous : undefined;
+    },
     refetchInterval: options?.refetchInterval,
   });
 }

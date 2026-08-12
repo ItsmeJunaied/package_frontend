@@ -15,14 +15,29 @@ import { DailyVolumeChart } from '@/components/charts/daily-volume-chart';
 import { PipelineFunnel } from '@/components/charts/pipeline-funnel';
 import { StatTile } from '@/components/charts/stat-tile';
 import { StatusDonut } from '@/components/charts/status-donut';
+import { RangeControl } from '@/components/range-control';
 import { StatusBadge } from '@/components/status-badge';
 import { ErrorState } from '@/components/ui/states';
-import { useStats } from '@/api/queries';
-import { cn } from '@/lib/cn';
+import { useStats, type StatsRange } from '@/api/queries';
+import { spanDays } from '@/lib/date-range';
 import { formatRelative } from '@/lib/format';
 import { STATUS_META, type OrderStatus } from '@/lib/status';
 
-const WINDOWS = [7, 14, 30] as const;
+const MAX_SPAN_DAYS = 90;
+
+const rangeLabel = new Intl.DateTimeFormat('en-GB', {
+  day: 'numeric',
+  month: 'short',
+  timeZone: 'UTC',
+});
+
+/** "6 – 12 Aug", from the range the server reports rather than the one we asked for. */
+function describeRange(from: string, to: string): string {
+  const a = new Date(`${from}T00:00:00Z`);
+  const b = new Date(`${to}T00:00:00Z`);
+  if (from === to) return rangeLabel.format(a);
+  return `${rangeLabel.format(a)} – ${rangeLabel.format(b)}`;
+}
 
 /*
  * Tile accents are chrome, not encoding — the tile already names its metric in
@@ -39,8 +54,13 @@ function formatDuration(hours: number | null): string {
 }
 
 export function DashboardPage() {
-  const [days, setDays] = useState<(typeof WINDOWS)[number]>(14);
-  const query = useStats(days);
+  /* Weekly by default. A month of bars is the wrong first thing to show a
+     dispatcher whose question is almost always about this week. */
+  const [range, setRange] = useState<StatsRange>({ days: 7 });
+
+  // Don't fire a request for a range the API will reject; the control says why.
+  const valid = !range.from || !range.to || spanDays(range) <= MAX_SPAN_DAYS;
+  const query = useStats(valid ? range : { days: 7 });
 
   if (query.isError) {
     return (
@@ -64,20 +84,37 @@ export function DashboardPage() {
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-end justify-between gap-4">
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
           <p className="mt-1.5 text-sm text-fog">
-            Aggregated in Postgres, not counted in the browser — these numbers cover every order,
-            not just the current page.
+            {/* Every figure on this page shares one window — tiles, donut,
+                pipeline, courier load and the volume chart alike. Saying so
+                here is the whole reason the numbers can be trusted against
+                each other. */}
+            {stats ?
+              <>
+                Everything below covers{' '}
+                <span className="font-medium text-ink">{describeRange(stats.from, stats.to)}</span>{' '}
+                ({stats.windowDays} day{stats.windowDays === 1 ? '' : 's'}), aggregated in Postgres
+                rather than counted in the browser.
+              </>
+            : 'Aggregated in Postgres, not counted in the browser.'}
           </p>
         </div>
-        {stats && (
-          <p className="flex items-center gap-2 font-mono text-[11px] text-fog-dim">
-            <span aria-hidden className="size-1.5 rounded-full bg-delivered shadow-[0_0_8px_var(--color-delivered)]" />
-            updated {formatRelative(stats.generatedAt)}
-          </p>
-        )}
+
+        <div className="flex flex-col items-end gap-2">
+          <RangeControl value={range} onChange={setRange} maxSpanDays={MAX_SPAN_DAYS} />
+          {stats && (
+            <p className="flex items-center gap-2 font-mono text-[11px] text-fog-dim">
+              <span
+                aria-hidden
+                className="size-1.5 rounded-full bg-delivered shadow-[0_0_8px_var(--color-delivered)]"
+              />
+              updated {formatRelative(stats.generatedAt)}
+            </p>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
@@ -166,34 +203,7 @@ export function DashboardPage() {
         </ChartCard>
       </div>
 
-      <ChartCard
-        title="Daily volume"
-        subtitle="Created against delivered, by UTC day"
-        action={
-          <div
-            role="group"
-            aria-label="Time window"
-            className="flex rounded-full border border-hairline bg-graphite-deep p-1"
-          >
-            {WINDOWS.map((w) => (
-              <button
-                key={w}
-                type="button"
-                onClick={() => setDays(w)}
-                aria-pressed={days === w}
-                className={cn(
-                  'rounded-full px-3 py-1 font-mono text-[11px] transition-all',
-                  days === w ?
-                    'bg-accent text-white shadow-[0_3px_10px_-3px_rgba(47,107,255,0.9)]'
-                  : 'text-fog-dim hover:text-fog',
-                )}
-              >
-                {w}d
-              </button>
-            ))}
-          </div>
-        }
-      >
+      <ChartCard title="Daily volume" subtitle="Created against delivered, by UTC day">
         {stats ?
           <DailyVolumeChart daily={stats.daily} />
         : <div className="skeleton h-[172px] w-full rounded" />}
