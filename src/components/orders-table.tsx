@@ -60,7 +60,7 @@ export function OrdersTable({ orders, isLoading, isFetching, emptyHint }: Orders
                   {order.trackingNumber}
                 </Link>
               </td>
-              <td className="px-4 py-3 text-sm text-[#e6eaf0]">{order.customerName}</td>
+              <td className="px-4 py-3 text-sm text-ink">{order.customerName}</td>
               <td className="max-w-[22rem] truncate px-4 py-3 text-sm text-fog">
                 {order.dropoffAddress}
               </td>
@@ -96,7 +96,7 @@ export function OrdersTable({ orders, isLoading, isFetching, emptyHint }: Orders
                 <span className="font-mono text-xs text-signal">{order.trackingNumber}</span>
                 <StatusBadge status={order.status} size="sm" />
               </div>
-              <p className="mt-2 text-sm font-medium text-[#e6eaf0]">{order.customerName}</p>
+              <p className="mt-2 text-sm font-medium text-ink">{order.customerName}</p>
               <p className="mt-0.5 truncate text-xs text-fog">{order.dropoffAddress}</p>
               <div className="mt-2 flex items-center gap-3 font-mono text-[11px] text-fog-dim">
                 <span>{formatWeight(order.packageWeightKg)}</span>

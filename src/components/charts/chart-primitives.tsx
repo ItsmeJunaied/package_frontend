@@ -5,10 +5,11 @@ import { cn } from '@/lib/cn';
 /**
  * Shared chart furniture.
  *
- * Every mark in this dashboard is a `div` rather than an `<svg>` element. The
- * shapes are all rectangles anchored to a baseline, which CSS does natively and
- * responsively, and it keeps the labels as real text — selectable, translatable,
- * and sized by the same type scale as the rest of the console.
+ * Every mark in this dashboard is a `div` or a CSS gradient rather than an
+ * `<svg>` element, and there is no charting library. The shapes are rectangles
+ * anchored to a baseline plus one conic ring, all of which CSS does natively
+ * and responsively, and it keeps the labels as real text — selectable,
+ * translatable, and sized by the same type scale as the rest of the console.
  */
 
 export function ChartCard({
@@ -25,11 +26,16 @@ export function ChartCard({
   className?: string;
 }) {
   return (
-    <section className={cn('rounded-lg border border-hairline bg-slate-surface p-4 sm:p-5', className)}>
+    <section
+      className={cn(
+        'panel rounded-xl border border-hairline p-4 shadow-[0_1px_2px_rgba(0,0,0,0.4),0_12px_32px_-16px_rgba(0,0,0,0.8)] sm:p-5',
+        className,
+      )}
+    >
       <header className="flex flex-wrap items-start justify-between gap-3">
-        <div>
+        <div className="min-w-0">
           <h2 className="text-sm font-semibold tracking-tight">{title}</h2>
-          {subtitle && <p className="mt-0.5 text-xs text-fog">{subtitle}</p>}
+          {subtitle && <p className="mt-1 text-xs text-fog">{subtitle}</p>}
         </div>
         {action}
       </header>
@@ -47,7 +53,7 @@ export interface LegendItem {
 /**
  * Present whenever a chart carries two or more series. The swatch is never the
  * only cue — status series bring their pipeline icon along, which is what keeps
- * the delivered/out-for-delivery pair legible under protanopia.
+ * the delivered/out-for-delivery pair legible under deuteranopia.
  */
 export function Legend({ items }: { items: LegendItem[] }) {
   return (
@@ -56,8 +62,11 @@ export function Legend({ items }: { items: LegendItem[] }) {
         <li key={label} className="flex items-center gap-1.5 text-[11px] text-fog">
           <span
             aria-hidden
-            className="size-2 shrink-0 rounded-[2px]"
-            style={{ backgroundColor: color }}
+            className="size-2 shrink-0 rounded-full"
+            style={{
+              backgroundColor: color,
+              boxShadow: `0 0 0 3px color-mix(in oklab, ${color} 16%, transparent)`,
+            }}
           />
           {Icon && <Icon className="size-3 shrink-0 text-fog-dim" aria-hidden />}
           {label}
@@ -80,10 +89,10 @@ export function TooltipRow({
   return (
     <div className="flex items-center gap-2">
       {color && (
-        <span aria-hidden className="size-2 rounded-[2px]" style={{ backgroundColor: color }} />
+        <span aria-hidden className="size-2 rounded-full" style={{ backgroundColor: color }} />
       )}
       <span className="text-fog">{label}</span>
-      <span className="ml-auto font-mono font-medium text-[#e6eaf0]">{value}</span>
+      <span className="ml-auto pl-3 font-mono font-medium text-ink tabular-nums">{value}</span>
     </div>
   );
 }

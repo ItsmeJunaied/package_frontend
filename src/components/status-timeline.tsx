@@ -34,7 +34,7 @@ export function StatusTimeline({ order }: { order: OrderDetail }) {
       className="manifest-edge overflow-hidden rounded-lg border border-hairline bg-slate-surface"
     >
       <header className="flex items-baseline justify-between gap-3 border-b border-hairline px-5 pt-5 pb-3">
-        <h2 className="text-sm font-semibold tracking-wide text-[#e6eaf0] uppercase">
+        <h2 className="text-sm font-semibold tracking-wide text-ink uppercase">
           Status timeline
         </h2>
         <span className="font-mono text-[11px] text-fog-dim">
@@ -82,7 +82,7 @@ export function StatusTimeline({ order }: { order: OrderDetail }) {
                   <p
                     className={cn(
                       'text-sm font-medium',
-                      isReached ? 'text-[#e6eaf0]' : 'text-fog-dim',
+                      isReached ? 'text-ink' : 'text-fog-dim',
                     )}
                   >
                     {meta.label}

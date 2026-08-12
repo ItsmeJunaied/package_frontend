@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { DataTable, TooltipRow } from './chart-primitives';
 import { useChartTooltip } from '@/hooks/use-chart-tooltip';
 import type { OrderStats } from '@/api/queries';
+import { TRACK, markFillX, markGlow } from '@/lib/chart-style';
 import { PIPELINE, STATUS_META, type OrderStatus } from '@/lib/status';
 
 /**
@@ -25,8 +26,8 @@ export function PipelineFunnel({ byStatus }: { byStatus: OrderStats['byStatus'] 
 
   return (
     <div>
-      <ul className="space-y-2.5">
-        {stages.map(({ status, count }) => {
+      <ul className="space-y-2">
+        {stages.map(({ status, count }, index) => {
           const meta = STATUS_META[status as OrderStatus];
           const Icon = meta.icon;
 
@@ -34,21 +35,26 @@ export function PipelineFunnel({ byStatus }: { byStatus: OrderStats['byStatus'] 
             <li key={status}>
               <Link
                 to={`/orders?status=${status}`}
-                className="group grid grid-cols-[5.5rem_1fr_2.25rem] items-center gap-2.5 rounded focus-visible:outline-none sm:grid-cols-[7.5rem_1fr_2.5rem] sm:gap-3"
+                className="group grid grid-cols-[5.5rem_1fr_2.25rem] items-center gap-2.5 rounded-md px-1 py-1 transition-colors hover:bg-slate-raised/50 focus-visible:outline-none sm:grid-cols-[7.5rem_1fr_2.5rem] sm:gap-3"
               >
-                <span className="flex items-center gap-1.5 text-xs text-fog group-hover:text-[#e6eaf0]">
+                <span className="flex items-center gap-1.5 text-xs text-fog group-hover:text-ink">
                   <Icon className={`size-3.5 shrink-0 ${meta.text}`} aria-hidden />
                   <span className="truncate">{meta.label}</span>
                 </span>
 
                 {/* The track is the empty remainder — it makes "3 of a possible
                     12" readable without a numeric axis. */}
-                <span className="h-2.5 w-full overflow-hidden rounded-[4px] bg-graphite-deep">
+                <span
+                  className="h-2.5 w-full overflow-hidden rounded-full"
+                  style={{ background: TRACK, boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.45)' }}
+                >
                   <span
-                    className="block h-full rounded-[4px] transition-[width,opacity] duration-300 group-hover:opacity-85"
+                    className="animate-rise-x block h-full rounded-full transition-[width,filter] duration-300 group-hover:brightness-110"
                     style={{
                       width: `${Math.max(count === 0 ? 0 : 2, (count / peak) * 100)}%`,
-                      backgroundColor: meta.chart,
+                      background: markFillX(meta.chart),
+                      boxShadow: count === 0 ? undefined : markGlow(meta.chart, 0.8),
+                      animationDelay: `${index * 55}ms`,
                     }}
                     onMouseMove={(e) => show(e, <TooltipRow color={meta.chart} label={meta.label} value={count} />)}
                     onMouseLeave={hide}

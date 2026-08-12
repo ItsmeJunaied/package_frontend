@@ -1,23 +1,44 @@
 @import 'tailwindcss';
 
 /*
- * Design tokens from DESIGN.md §10.1. This is an operations console — it should
- * read as a control tower, not a marketing page. Every colour in the status
- * vocabulary comes from here; no component invents its own.
+ * Design tokens. This is an operations console — it should read as a control
+ * tower, not a marketing page. Every colour in the status vocabulary comes from
+ * here; no component invents its own.
+ *
+ * The surfaces are a near-black with a cool cast rather than DESIGN.md §10.1's
+ * warmer graphite, and the brand accent is blue rather than amber. Amber is now
+ * *only* `out_for_delivery`, which is what it always meant semantically — using
+ * it for the logo and the focus ring as well made a status colour ambient.
  */
 @theme {
-  --color-graphite: #1c2128;
-  --color-graphite-deep: #161b22;
-  --color-slate-surface: #262c36;
-  --color-slate-raised: #2f3742;
-  --color-fog: #8b94a3;
-  --color-fog-dim: #5c6673;
-  --color-hairline: #343b46;
+  /* Surfaces, darkest to lightest. */
+  --color-graphite: #0e0f12; /* page */
+  --color-graphite-deep: #131418; /* inset wells, tracks, inputs */
+  --color-slate-surface: #17181b; /* card */
+  --color-slate-raised: #202329; /* hover, chips, raised rows */
+  --color-hairline: #272a31; /* 1px borders */
 
-  --color-signal: #f5a623;
-  --color-transit: #4c8dff;
-  --color-delivered: #34c77b;
-  --color-alert: #e5484d;
+  /* Ink. */
+  --color-ink: #eef1f6;
+  --color-fog: #8b93a7;
+  --color-fog-dim: #626a7b;
+
+  /*
+   * Brand chrome — deliberately NOT part of the status vocabulary. `--color-violet`
+   * never appears as a chart mark: it sits one step from `--color-transit` in
+   * hue, which measures at ΔE 1.1 under protanopia. It is chrome only, where it
+   * is never adjacent to blue and never carries meaning on its own.
+   */
+  --color-accent: #2f6bff;
+  --color-accent-hi: #5b8bff;
+  --color-violet: #8b5cf6;
+
+  /* Status vocabulary. See lib/status.ts for the measured justification. */
+  --color-haze: #a9b8e8; /* picked_up */
+  --color-transit: #2f6bff; /* in_transit */
+  --color-signal: #f5a623; /* out_for_delivery */
+  --color-delivered: #2ed47a; /* delivered */
+  --color-alert: #f04452; /* cancelled */
 
   --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
@@ -34,15 +55,25 @@
 
   body {
     margin: 0;
-    background-color: var(--color-graphite);
-    color: #e6eaf0;
+    color: var(--color-ink);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     font-feature-settings: 'cv02', 'cv03', 'cv04';
+
+    /* A single cool bloom behind the top of the page, so the console reads as
+       lit from somewhere rather than as a flat swatch. Fixed, so it does not
+       travel down a long orders table. */
+    background-color: var(--color-graphite);
+    background-image: radial-gradient(
+      120rem 40rem at 50% -18rem,
+      color-mix(in oklab, var(--color-accent) 9%, transparent),
+      transparent 70%
+    );
+    background-attachment: fixed;
   }
 
   :focus-visible {
-    outline: 2px solid var(--color-signal);
+    outline: 2px solid var(--color-accent);
     outline-offset: 2px;
   }
 
@@ -51,15 +82,42 @@
     height: 10px;
   }
   ::-webkit-scrollbar-track {
-    background: var(--color-graphite-deep);
+    background: transparent;
   }
   ::-webkit-scrollbar-thumb {
     background: var(--color-slate-raised);
+    border: 2px solid var(--color-graphite);
     border-radius: 999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-fog-dim);
   }
 }
 
 @layer utilities {
+  /*
+   * The card treatment. A flat fill on a near-black page looks like a hole;
+   * the hairline top highlight gives the panel an edge that catches the light,
+   * which is most of what separates a "premium" console from a plain one.
+   */
+  .panel {
+    position: relative;
+    background-color: var(--color-slate-surface);
+    background-image: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.035) 0%,
+      transparent 5.5rem
+    );
+  }
+  .panel::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+
   /*
    * The "torn manifest stub" edge on the timeline card (DESIGN.md §10.1) —
    * a perforated top border, the way a waybill stub tears off a manifest.
@@ -119,5 +177,40 @@
   }
   .animate-slide-in {
     animation: slide-in 0.18s ease-out;
+  }
+
+  /*
+   * Chart marks grow from their baseline on mount. Purely decorative, so it is
+   * dropped entirely under `prefers-reduced-motion` rather than shortened —
+   * a fast wipe is still a wipe.
+   */
+  @keyframes rise-y {
+    from {
+      transform: scaleY(0);
+    }
+  }
+  @keyframes rise-x {
+    from {
+      transform: scaleX(0);
+    }
+  }
+  .animate-rise-y {
+    transform-origin: bottom;
+    animation: rise-y 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .animate-rise-x {
+    transform-origin: left;
+    animation: rise-x 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animate-rise-y,
+    .animate-rise-x,
+    .animate-slide-in {
+      animation: none;
+    }
+    .skeleton::after {
+      animation: none;
+    }
   }
 }

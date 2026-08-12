@@ -56,10 +56,20 @@ export function LoginPage() {
   if (isAuthenticated) return <Navigate to={redirectTo} replace />;
 
   return (
-    <div className="grid min-h-dvh place-items-center px-4 py-10">
-      <div className="w-full max-w-sm">
+    <div className="relative grid min-h-dvh place-items-center px-4 py-10">
+      {/* The one place the theme is allowed to be decorative. Two soft blooms
+          behind the card, nothing that moves and nothing that scrolls. */}
+      <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+        <span className="absolute -top-40 left-1/2 size-[36rem] -translate-x-1/2 rounded-full bg-accent/12 blur-[110px]" />
+        <span className="absolute -bottom-52 left-[58%] size-[28rem] rounded-full bg-violet/10 blur-[110px]" />
+      </div>
+
+      <div className="relative w-full max-w-sm">
         <div className="flex items-center gap-3">
-          <span className="grid size-9 shrink-0 place-items-center rounded bg-signal font-mono text-base font-bold text-graphite">
+          <span
+            className="grid size-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-accent-hi to-violet font-mono text-base font-bold text-white shadow-[0_6px_20px_-6px_rgba(47,107,255,0.9)]"
+            aria-hidden
+          >
             O
           </span>
           <div className="leading-tight">
@@ -70,7 +80,7 @@ export function LoginPage() {
           </div>
         </div>
 
-        <h1 className="mt-7 text-xl font-semibold tracking-tight">Staff sign in</h1>
+        <h1 className="mt-7 text-2xl font-semibold tracking-tight">Staff sign in</h1>
         <p className="mt-1.5 text-sm text-fog">
           Every order endpoint is behind a JWT. Sign in to reach the console.
         </p>
@@ -78,7 +88,7 @@ export function LoginPage() {
         <form
           onSubmit={onSubmit}
           noValidate
-          className="mt-5 space-y-4 rounded-lg border border-hairline bg-slate-surface p-5"
+          className="panel mt-5 space-y-4 rounded-xl border border-hairline p-5 shadow-[0_1px_2px_rgba(0,0,0,0.4),0_24px_48px_-24px_rgba(0,0,0,0.9)]"
         >
           <InputField
             label="Email"
@@ -101,7 +111,7 @@ export function LoginPage() {
           </Button>
         </form>
 
-        <p className="mt-4 rounded-md border border-hairline bg-graphite-deep px-4 py-3 font-mono text-[11px] leading-relaxed text-fog-dim">
+        <p className="mt-4 rounded-lg border border-hairline bg-graphite-deep/70 px-4 py-3 font-mono text-[11px] leading-relaxed text-fog-dim">
           <span className="text-fog">Demo account</span> — already filled in.
           <br />
           {DEMO_CREDENTIALS.email} / {DEMO_CREDENTIALS.password}

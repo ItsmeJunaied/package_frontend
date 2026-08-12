@@ -51,14 +51,14 @@ export function Dialog({ open, title, description, onClose, children }: DialogPr
       >
         <header className="flex items-start justify-between gap-4 border-b border-hairline px-5 py-4">
           <div>
-            <h2 className="text-base font-semibold text-[#e6eaf0]">{title}</h2>
+            <h2 className="text-base font-semibold text-ink">{title}</h2>
             {description && <p className="mt-0.5 text-xs text-fog">{description}</p>}
           </div>
           <button
             type="button"
             onClick={onClose}
             aria-label="Close dialog"
-            className="rounded p-1 text-fog transition-colors hover:bg-slate-raised hover:text-[#e6eaf0]"
+            className="rounded p-1 text-fog transition-colors hover:bg-slate-raised hover:text-ink"
           >
             <X className="size-4" />
           </button>

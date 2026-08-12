@@ -122,7 +122,7 @@ export function OrderDetailPage() {
     <div className="space-y-5">
       <Link
         to="/orders"
-        className="inline-flex items-center gap-1.5 text-xs text-fog transition-colors hover:text-[#e6eaf0]"
+        className="inline-flex items-center gap-1.5 text-xs text-fog transition-colors hover:text-ink"
       >
         <ArrowLeft className="size-3.5" aria-hidden />
         All orders
@@ -165,7 +165,7 @@ export function OrderDetailPage() {
         <StatusTimeline order={order} />
 
         <aside className="space-y-3 rounded-lg border border-hairline bg-slate-surface p-5">
-          <h2 className="text-sm font-semibold tracking-wide text-[#e6eaf0] uppercase">
+          <h2 className="text-sm font-semibold tracking-wide text-ink uppercase">
             Consignment
           </h2>
 
@@ -196,7 +196,7 @@ function Detail({
       <Icon className="mt-0.5 size-3.5 shrink-0 text-fog-dim" aria-hidden />
       <div className="min-w-0">
         <p className="text-[11px] tracking-wide text-fog-dim uppercase">{label}</p>
-        <p className={`mt-0.5 text-sm break-words text-[#e6eaf0] ${mono ? 'font-mono' : ''}`}>
+        <p className={`mt-0.5 text-sm break-words text-ink ${mono ? 'font-mono' : ''}`}>
           {value}
         </p>
       </div>

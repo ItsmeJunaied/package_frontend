@@ -20,7 +20,7 @@ export function EmptyState({
         <Icon className="size-5 text-fog-dim" aria-hidden />
       </div>
       <div>
-        <p className="text-sm font-medium text-[#e6eaf0]">{title}</p>
+        <p className="text-sm font-medium text-ink">{title}</p>
         <p className="mx-auto mt-1 max-w-sm text-xs text-fog">{description}</p>
       </div>
       {action}
@@ -44,7 +44,7 @@ export function ErrorState({
         <AlertTriangle className="size-5 text-alert" aria-hidden />
       </div>
       <div>
-        <p className="text-sm font-medium text-[#e6eaf0]">{title}</p>
+        <p className="text-sm font-medium text-ink">{title}</p>
         <p className="mx-auto mt-1 max-w-md text-xs break-words text-fog">{message}</p>
       </div>
       {onRetry && (

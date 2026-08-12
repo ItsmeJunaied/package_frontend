@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { DataTable, Legend, TooltipRow } from './chart-primitives';
 import { useChartTooltip } from '@/hooks/use-chart-tooltip';
 import type { OrderStats } from '@/api/queries';
+import { markFillX, markGlow } from '@/lib/chart-style';
 import { STATUS_META } from '@/lib/status';
 
 const SERIES = [
@@ -37,23 +38,28 @@ export function CourierLoadChart({ byCourier }: { byCourier: OrderStats['byCouri
         <Legend items={SERIES.map(({ label, color, icon }) => ({ label, color, icon }))} />
       </div>
 
-      <ul className="space-y-2.5">
-        {rows.map((courier) => (
+      <ul className="space-y-2">
+        {rows.map((courier, index) => (
           <li
             key={courier.courierName}
             className="grid grid-cols-[5rem_1fr_2rem] items-center gap-2.5 sm:grid-cols-[6.5rem_1fr_2rem] sm:gap-3"
           >
             <Link
               to={`/courier?name=${encodeURIComponent(courier.courierName)}`}
-              className="truncate text-xs text-fog transition-colors hover:text-[#e6eaf0]"
+              className="truncate text-xs text-fog transition-colors hover:text-ink"
               title={courier.courierName}
             >
               {courier.courierName}
             </Link>
 
+            {/* gap-[2px] is the surface showing through between segments:
+                adjacent fills never touch, so a boundary is a boundary. */}
             <span
-              className="flex h-2.5 gap-[2px]"
-              style={{ width: `${Math.max(4, (courier.total / peak) * 100)}%` }}
+              className="animate-rise-x flex h-2.5 gap-[2px]"
+              style={{
+                width: `${Math.max(4, (courier.total / peak) * 100)}%`,
+                animationDelay: `${index * 45}ms`,
+              }}
             >
               {SERIES.map(({ key, label, color }) => {
                 const value = courier[key];
@@ -61,13 +67,18 @@ export function CourierLoadChart({ byCourier }: { byCourier: OrderStats['byCouri
                 return (
                   <span
                     key={key}
-                    className="h-full rounded-[4px] transition-opacity hover:opacity-85"
-                    style={{ flexGrow: value, flexBasis: 0, backgroundColor: color }}
+                    className="h-full rounded-full transition-[filter] duration-200 hover:brightness-110"
+                    style={{
+                      flexGrow: value,
+                      flexBasis: 0,
+                      background: markFillX(color),
+                      boxShadow: markGlow(color, 0.7),
+                    }}
                     onMouseMove={(e) =>
                       show(
                         e,
                         <>
-                          <p className="mb-1.5 font-medium text-[#e6eaf0]">{courier.courierName}</p>
+                          <p className="mb-1.5 font-medium text-ink">{courier.courierName}</p>
                           <TooltipRow color={color} label={label} value={value} />
                           <TooltipRow label="Total" value={courier.total} />
                         </>,

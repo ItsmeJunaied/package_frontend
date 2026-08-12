@@ -40,8 +40,8 @@ export function StatusFilter({
             className={cn(
               'flex shrink-0 items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
               active
-                ? 'bg-slate-raised text-[#e6eaf0] shadow-sm'
-                : 'text-fog hover:bg-slate-raised/50 hover:text-[#e6eaf0]',
+                ? 'bg-slate-raised text-ink shadow-sm'
+                : 'text-fog hover:bg-slate-raised/50 hover:text-ink',
             )}
           >
             {key !== 'all' && (

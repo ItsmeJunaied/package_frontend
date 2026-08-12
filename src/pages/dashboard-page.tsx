@@ -14,7 +14,7 @@ import { CourierLoadChart } from '@/components/charts/courier-load-chart';
 import { DailyVolumeChart } from '@/components/charts/daily-volume-chart';
 import { PipelineFunnel } from '@/components/charts/pipeline-funnel';
 import { StatTile } from '@/components/charts/stat-tile';
-import { StatusShareBar } from '@/components/charts/status-share-bar';
+import { StatusDonut } from '@/components/charts/status-donut';
 import { StatusBadge } from '@/components/status-badge';
 import { ErrorState } from '@/components/ui/states';
 import { useStats } from '@/api/queries';
@@ -23,6 +23,14 @@ import { formatRelative } from '@/lib/format';
 import { STATUS_META, type OrderStatus } from '@/lib/status';
 
 const WINDOWS = [7, 14, 30] as const;
+
+/*
+ * Tile accents are chrome, not encoding — the tile already names its metric in
+ * words, so the colour is only there to keep six identical cards from reading
+ * as one grey slab. That is why `--color-violet`, which is banned from chart
+ * marks for sitting too close to `in_transit` blue, is allowed on a tile.
+ */
+const VIOLET = 'var(--color-violet)';
 
 /** "6.4 h" while it is hours, "2.1 d" once it stops being. */
 function formatDuration(hours: number | null): string {
@@ -36,7 +44,7 @@ export function DashboardPage() {
 
   if (query.isError) {
     return (
-      <div className="rounded-lg border border-hairline bg-slate-surface">
+      <div className="panel rounded-xl border border-hairline">
         <ErrorState
           title="Couldn't load the dashboard"
           message={query.error.message}
@@ -58,14 +66,15 @@ export function DashboardPage() {
     <div className="space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight">Dashboard</h1>
-          <p className="mt-1 text-sm text-fog">
+          <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
+          <p className="mt-1.5 text-sm text-fog">
             Aggregated in Postgres, not counted in the browser — these numbers cover every order,
             not just the current page.
           </p>
         </div>
         {stats && (
-          <p className="font-mono text-[11px] text-fog-dim">
+          <p className="flex items-center gap-2 font-mono text-[11px] text-fog-dim">
+            <span aria-hidden className="size-1.5 rounded-full bg-delivered shadow-[0_0_8px_var(--color-delivered)]" />
             updated {formatRelative(stats.generatedAt)}
           </p>
         )}
@@ -76,7 +85,7 @@ export function DashboardPage() {
           label="Total orders"
           value={n(totals?.all)}
           icon={Package}
-          accent={STATUS_META.pending.chart}
+          accent={VIOLET}
           isLoading={loading}
         />
         <StatTile
@@ -121,28 +130,32 @@ export function DashboardPage() {
         />
       </div>
 
-      <ChartCard
-        title="Status mix"
-        subtitle={
-          totals ?
-            `${totals.all} orders · ${totals.totalWeightKg.toLocaleString()} kg on the books`
-          : 'Loading…'
-        }
-        action={
-          totals && (
-            <span className="flex items-center gap-1.5 font-mono text-[11px] text-fog-dim">
-              <Weight className="size-3.5" aria-hidden />
-              {totals.totalWeightKg.toLocaleString()} kg
-            </span>
-          )
-        }
-      >
-        {stats ?
-          <StatusShareBar byStatus={stats.byStatus} />
-        : <div className="skeleton h-7 w-full rounded-[4px]" />}
-      </ChartCard>
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+        <ChartCard
+          title="Status mix"
+          subtitle="Every order on the books — hover a status to isolate it"
+          action={
+            totals && (
+              <span className="flex items-center gap-1.5 rounded-full border border-hairline bg-graphite-deep px-2.5 py-1 font-mono text-[11px] text-fog">
+                <Weight className="size-3.5 text-fog-dim" aria-hidden />
+                {totals.totalWeightKg.toLocaleString()} kg
+              </span>
+            )
+          }
+        >
+          {stats ?
+            <StatusDonut byStatus={stats.byStatus} />
+          : <div className="flex items-center gap-6">
+              <div className="skeleton size-[152px] shrink-0 rounded-full" />
+              <div className="flex-1 space-y-2">
+                {[0, 1, 2, 3].map((i) => (
+                  <div key={i} className="skeleton h-5 w-full rounded" />
+                ))}
+              </div>
+            </div>
+          }
+        </ChartCard>
 
-      <div className="grid gap-4 lg:grid-cols-2">
         <ChartCard
           title="Pipeline"
           subtitle="Orders sitting in each stage right now — click a stage to filter the table"
@@ -151,40 +164,40 @@ export function DashboardPage() {
             <PipelineFunnel byStatus={stats.byStatus} />
           : <SkeletonRows />}
         </ChartCard>
-
-        <ChartCard
-          title="Daily volume"
-          subtitle="Created against delivered, by UTC day"
-          action={
-            <div
-              role="group"
-              aria-label="Time window"
-              className="flex rounded-md border border-hairline bg-graphite-deep p-0.5"
-            >
-              {WINDOWS.map((w) => (
-                <button
-                  key={w}
-                  type="button"
-                  onClick={() => setDays(w)}
-                  aria-pressed={days === w}
-                  className={cn(
-                    'rounded px-2 py-1 font-mono text-[11px] transition-colors',
-                    days === w ?
-                      'bg-slate-raised text-[#e6eaf0]'
-                    : 'text-fog-dim hover:text-fog',
-                  )}
-                >
-                  {w}d
-                </button>
-              ))}
-            </div>
-          }
-        >
-          {stats ?
-            <DailyVolumeChart daily={stats.daily} />
-          : <div className="skeleton h-[168px] w-full rounded" />}
-        </ChartCard>
       </div>
+
+      <ChartCard
+        title="Daily volume"
+        subtitle="Created against delivered, by UTC day"
+        action={
+          <div
+            role="group"
+            aria-label="Time window"
+            className="flex rounded-full border border-hairline bg-graphite-deep p-1"
+          >
+            {WINDOWS.map((w) => (
+              <button
+                key={w}
+                type="button"
+                onClick={() => setDays(w)}
+                aria-pressed={days === w}
+                className={cn(
+                  'rounded-full px-3 py-1 font-mono text-[11px] transition-all',
+                  days === w ?
+                    'bg-accent text-white shadow-[0_3px_10px_-3px_rgba(47,107,255,0.9)]'
+                  : 'text-fog-dim hover:text-fog',
+                )}
+              >
+                {w}d
+              </button>
+            ))}
+          </div>
+        }
+      >
+        {stats ?
+          <DailyVolumeChart daily={stats.daily} />
+        : <div className="skeleton h-[172px] w-full rounded" />}
+      </ChartCard>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <ChartCard title="Courier load" subtitle="Assigned orders per courier, by outcome">
@@ -195,12 +208,12 @@ export function DashboardPage() {
 
         <ChartCard title="Recent activity" subtitle="The last eight status_history rows">
           {stats ?
-            <ol className="space-y-2.5">
+            <ol className="space-y-2">
               {stats.recentActivity.map((entry) => (
                 <li key={entry.id}>
                   <Link
                     to={`/orders/${entry.orderId}`}
-                    className="flex items-center gap-3 rounded-md border border-hairline bg-graphite-deep px-3 py-2 transition-colors hover:border-fog-dim"
+                    className="flex items-center gap-3 rounded-lg border border-hairline bg-graphite-deep px-3 py-2 transition-colors hover:border-fog-dim hover:bg-slate-raised"
                   >
                     <StatusBadge status={entry.status as OrderStatus} size="sm" />
                     <span className="min-w-0 flex-1">

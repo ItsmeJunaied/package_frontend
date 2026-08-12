@@ -7,10 +7,15 @@ type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
 type Size = 'sm' | 'md';
 
 const VARIANTS: Record<Variant, string> = {
-  primary: 'bg-signal text-graphite hover:bg-signal/90 font-semibold',
+  /* The bloom under the primary button is the same treatment the chart marks
+     get — one light source, applied consistently, is what stops "dark theme"
+     from reading as "flat theme". */
+  primary:
+    'bg-accent text-white font-semibold shadow-[0_4px_14px_-4px_rgba(47,107,255,0.75)] ' +
+    'hover:bg-accent-hi hover:shadow-[0_6px_20px_-4px_rgba(47,107,255,0.9)]',
   secondary:
-    'bg-slate-raised text-[#e6eaf0] border border-hairline hover:bg-slate-raised/70 hover:border-fog-dim',
-  ghost: 'text-fog hover:text-[#e6eaf0] hover:bg-slate-raised/60',
+    'bg-slate-raised text-ink border border-hairline hover:bg-slate-raised/70 hover:border-fog-dim',
+  ghost: 'text-fog hover:text-ink hover:bg-slate-raised/60',
   danger: 'bg-alert/12 text-alert border border-alert/35 hover:bg-alert/20',
 };
 
@@ -34,8 +39,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       ref={ref}
       disabled={disabled ?? loading}
       className={cn(
-        'inline-flex items-center justify-center rounded-md whitespace-nowrap transition-colors',
-        'disabled:cursor-not-allowed disabled:opacity-50',
+        'inline-flex items-center justify-center rounded-lg whitespace-nowrap transition-all',
+        'disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none',
         VARIANTS[variant],
         SIZES[size],
         className,

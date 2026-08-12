@@ -28,7 +28,11 @@ export function useChartTooltip() {
       createPortal(
         <div
           role="tooltip"
-          className="pointer-events-none fixed z-50 max-w-[240px] rounded-md border border-hairline bg-graphite-deep px-2.5 py-2 text-xs shadow-lg"
+          className={
+            'pointer-events-none fixed z-50 max-w-[240px] rounded-lg border border-hairline ' +
+            'bg-graphite-deep/95 px-3 py-2.5 text-xs shadow-[0_8px_28px_-6px_rgba(0,0,0,0.85)] ' +
+            'ring-1 ring-white/5 backdrop-blur-sm'
+          }
           style={{
             left: Math.min(tip.x + 14, window.innerWidth - 250),
             top: Math.min(tip.y + 14, window.innerHeight - 90),

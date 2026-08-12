@@ -62,14 +62,14 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             >
               <Icon className="mt-0.5 size-4 shrink-0" aria-hidden />
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-[#e6eaf0]">{toast.message}</p>
+                <p className="text-sm font-medium text-ink">{toast.message}</p>
                 {toast.detail && <p className="mt-0.5 text-xs break-words text-fog">{toast.detail}</p>}
               </div>
               <button
                 type="button"
                 onClick={() => dismiss(toast.id)}
                 aria-label="Dismiss notification"
-                className="text-fog transition-colors hover:text-[#e6eaf0]"
+                className="text-fog transition-colors hover:text-ink"
               >
                 <X className="size-3.5" />
               </button>
