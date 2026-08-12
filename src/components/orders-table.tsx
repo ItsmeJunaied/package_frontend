@@ -55,7 +55,7 @@ export function OrdersTable({ orders, isLoading, isFetching, emptyHint }: Orders
               <td className="px-4 py-3">
                 <Link
                   to={`/orders/${order.id}`}
-                  className="font-mono text-xs text-signal hover:underline"
+                  className="font-mono text-xs text-accent hover:underline"
                 >
                   {order.trackingNumber}
                 </Link>
@@ -77,7 +77,7 @@ export function OrdersTable({ orders, isLoading, isFetching, emptyHint }: Orders
                 <Link
                   to={`/orders/${order.id}`}
                   aria-label={`Open order ${order.trackingNumber}`}
-                  className="inline-flex text-fog-dim transition-colors group-hover:text-signal"
+                  className="inline-flex text-fog-dim transition-colors group-hover:text-accent"
                 >
                   <ChevronRight className="size-4" />
                 </Link>
@@ -93,7 +93,7 @@ export function OrdersTable({ orders, isLoading, isFetching, emptyHint }: Orders
           <li key={order.id}>
             <Link to={`/orders/${order.id}`} className="block px-4 py-3.5 active:bg-slate-raised/50">
               <div className="flex items-center justify-between gap-3">
-                <span className="font-mono text-xs text-signal">{order.trackingNumber}</span>
+                <span className="font-mono text-xs text-ink">{order.trackingNumber}</span>
                 <StatusBadge status={order.status} size="sm" />
               </div>
               <p className="mt-2 text-sm font-medium text-ink">{order.customerName}</p>

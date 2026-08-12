@@ -131,7 +131,7 @@ export function OrderDetailPage() {
       <header className="flex flex-wrap items-start justify-between gap-4 rounded-lg border border-hairline bg-slate-surface p-5">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-3">
-            <h1 className="font-mono text-lg font-semibold text-signal">{order.trackingNumber}</h1>
+            <h1 className="font-mono text-lg font-semibold text-ink">{order.trackingNumber}</h1>
             <StatusBadge status={order.status as OrderStatus} />
           </div>
           <p className="mt-1.5 text-sm text-fog">

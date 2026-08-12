@@ -5,7 +5,7 @@ import { cn } from '@/lib/cn';
 const CONTROL =
   'w-full rounded-md bg-graphite-deep border border-hairline px-3 py-2 text-sm text-ink ' +
   'placeholder:text-fog-dim transition-colors hover:border-fog-dim ' +
-  'focus:border-signal focus:outline-none disabled:opacity-50';
+  'focus:border-accent focus:outline-none disabled:opacity-50';
 
 interface BaseProps {
   label: string;

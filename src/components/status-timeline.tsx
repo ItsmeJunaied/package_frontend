@@ -71,7 +71,12 @@ export function StatusTimeline({ order }: { order: OrderDetail }) {
                   isReached
                     ? cn(meta.dot, 'border-transparent text-graphite')
                     : 'border-hairline bg-graphite-deep text-fog-dim',
-                  isCurrent && 'ring-2 ring-signal ring-offset-2 ring-offset-slate-surface',
+                  /* "You are here" is emphasis, not a status. A coloured ring
+                     would have to be one of the six, and every one of those
+                     already means something else on this very timeline — an
+                     amber ring around the green `delivered` node reads as a
+                     contradiction. Neutral ink is the only honest choice. */
+                  isCurrent && 'ring-2 ring-ink/70 ring-offset-2 ring-offset-slate-surface',
                 )}
               >
                 {isReached ? <Check className="size-3.5" strokeWidth={3} /> : index + 1}
@@ -88,7 +93,7 @@ export function StatusTimeline({ order }: { order: OrderDetail }) {
                     {meta.label}
                   </p>
                   {isCurrent && (
-                    <span className="rounded-full border border-signal/40 bg-signal/12 px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-signal uppercase">
+                    <span className="rounded-full border border-ink/25 bg-ink/10 px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-ink uppercase">
                       Current
                     </span>
                   )}
