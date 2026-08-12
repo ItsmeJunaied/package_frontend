@@ -18,6 +18,11 @@
   --color-slate-raised: #202329; /* hover, chips, raised rows */
   --color-hairline: #272a31; /* 1px borders */
 
+  /* Sidebar */
+  --color-sidebar-bg: #111218;
+  --color-sidebar-hover: #1a1c24;
+  --color-sidebar-active: #2f6bff;
+
   /* Ink. */
   --color-ink: #eef1f6;
   --color-fog: #8b93a7;
@@ -59,17 +64,8 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     font-feature-settings: 'cv02', 'cv03', 'cv04';
-
-    /* A single cool bloom behind the top of the page, so the console reads as
-       lit from somewhere rather than as a flat swatch. Fixed, so it does not
-       travel down a long orders table. */
     background-color: var(--color-graphite);
-    background-image: radial-gradient(
-      120rem 40rem at 50% -18rem,
-      color-mix(in oklab, var(--color-accent) 9%, transparent),
-      transparent 70%
-    );
-    background-attachment: fixed;
+    background-image: none;
   }
 
   :focus-visible {
@@ -139,6 +135,94 @@
     );
     background-size: 12px 6px;
     background-repeat: repeat-x;
+  }
+
+  /* Sidebar layout */
+  .sidebar-layout {
+    display: flex;
+    min-height: 100dvh;
+  }
+
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 240px;
+    background: var(--color-sidebar-bg);
+    border-right: 1px solid var(--color-hairline);
+    display: flex;
+    flex-direction: column;
+    z-index: 50;
+    overflow-y: auto;
+  }
+
+  .sidebar-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0.875rem;
+    border-radius: 0.625rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--color-fog);
+    transition: all 0.15s ease;
+    text-decoration: none;
+    position: relative;
+  }
+  .sidebar-nav-item:hover {
+    background: var(--color-sidebar-hover);
+    color: var(--color-ink);
+  }
+  .sidebar-nav-item.active {
+    background: var(--color-sidebar-active);
+    color: #fff;
+    box-shadow: 0 4px 14px -4px rgba(47, 107, 255, 0.7);
+  }
+
+  .main-content {
+    margin-left: 240px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* Top bar */
+  .topbar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 1.5rem;
+    border-bottom: 1px solid var(--color-hairline);
+    background: var(--color-graphite);
+  }
+
+  .search-input {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--color-graphite-deep);
+    border: 1px solid var(--color-hairline);
+    border-radius: 0.625rem;
+    padding: 0.5rem 0.875rem;
+    color: var(--color-ink);
+    font-size: 0.8125rem;
+    min-width: 280px;
+    transition: border-color 0.15s ease;
+  }
+  .search-input:focus-within {
+    border-color: var(--color-accent);
+  }
+  .search-input input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--color-ink);
+    font-size: inherit;
+    flex: 1;
+    font-family: inherit;
+  }
+  .search-input input::placeholder {
+    color: var(--color-fog-dim);
   }
 
   @keyframes shimmer {
@@ -211,6 +295,20 @@
     }
     .skeleton::after {
       animation: none;
+    }
+  }
+
+  /* Responsive: hide sidebar on mobile */
+  @media (max-width: 768px) {
+    .sidebar {
+      transform: translateX(-100%);
+      transition: transform 0.2s ease;
+    }
+    .sidebar.open {
+      transform: translateX(0);
+    }
+    .main-content {
+      margin-left: 0;
     }
   }
 }

@@ -1,14 +1,35 @@
-import { Link, NavLink, useLocation } from 'react-router-dom';
-import { LayoutDashboard, LogOut, PackageSearch, Truck } from 'lucide-react';
+import { NavLink, useLocation } from 'react-router-dom';
+import {
+  Bell,
+  Calendar,
+  ChevronDown,
+  LayoutDashboard,
+  LogOut,
+  MessageSquare,
+  MoreVertical,
+  PackageSearch,
+  Plus,
+  Search,
+  Settings,
+  Truck,
+  Users,
+} from 'lucide-react';
 
-import { Button } from './ui/button';
 import { cn } from '@/lib/cn';
 import { useAuth } from '@/hooks/use-auth';
 
 const NAV = [
-  { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/orders', label: 'Orders', icon: PackageSearch },
-  { to: '/courier', label: 'Courier', icon: Truck },
+  { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, badge: 4 },
+  { to: '/orders', label: 'Project', icon: PackageSearch, badge: 1 },
+  { to: '/courier', label: 'People', icon: Users },
+  { to: '/messages', label: 'Messages', icon: MessageSquare },
+  { to: '/calendar', label: 'Calendar', icon: Calendar },
+];
+
+const WORKSPACES = [
+  { name: 'Pertamina', color: '#2f6bff', active: true },
+  { name: 'SCBD Tower', color: '#f04452' },
+  { name: 'Bets Hotel', color: '#f5a623' },
 ];
 
 /** First letters of a name, for the avatar chip. */
@@ -27,77 +48,160 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const location = useLocation();
 
   return (
-    <div className="flex min-h-dvh flex-col">
-      <header className="sticky top-0 z-40 border-b border-hairline bg-graphite/80 backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4 sm:gap-4 sm:px-6">
-          <Link to="/dashboard" className="flex items-center gap-2.5">
-            {/*
-             * Blue into violet. The violet exists only here and on the sign-in
-             * screen — it is one hue step from `in_transit` blue and measures
-             * ΔE 1.1 under protanopia, so it is never allowed near a chart.
-             */}
-            <span
-              className="grid size-8 shrink-0 place-items-center rounded-[10px] bg-gradient-to-br from-accent-hi to-violet font-mono text-sm font-bold text-white shadow-[0_4px_14px_-4px_rgba(47,107,255,0.7)]"
-              aria-hidden
-            >
-              O
-            </span>
-            <span className="hidden flex-col leading-none sm:flex">
-              <span className="text-sm font-semibold tracking-tight">Onway</span>
-              <span className="font-mono text-[10px] tracking-widest text-fog-dim uppercase">
-                Delivery control
-              </span>
-            </span>
-          </Link>
+    <div className="sidebar-layout">
+      {/* ─── Sidebar ─── */}
+      <aside className="sidebar">
+        {/* Brand */}
+        <div className="flex items-center gap-2.5 px-5 pt-6 pb-6">
+          <span
+            className="grid size-9 shrink-0 place-items-center rounded-lg bg-gradient-to-br from-accent-hi to-violet text-sm font-bold text-white shadow-[0_4px_14px_-4px_rgba(47,107,255,0.7)]"
+            aria-hidden
+          >
+            O
+          </span>
+          <span className="text-base font-semibold tracking-tight text-ink">Onway</span>
+        </div>
 
-          <nav className="flex items-center gap-1 rounded-full border border-hairline bg-graphite-deep/80 p-1">
-            {NAV.map(({ to, label, icon: Icon }) => (
+        {/* Admin Section */}
+        <div className="px-4">
+          <p className="mb-2 px-2 text-[10px] font-semibold tracking-[0.12em] text-fog-dim uppercase">
+            Administrator
+          </p>
+
+          <nav className="space-y-0.5">
+            {NAV.map(({ to, label, icon: Icon, badge }) => (
               <NavLink
                 key={to}
                 to={to}
                 className={({ isActive }) =>
                   cn(
-                    'flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-xs font-medium transition-all sm:px-3.5 sm:text-sm',
-                    isActive || (to === '/orders' && location.pathname.startsWith('/orders'))
-                      ? 'bg-accent text-white shadow-[0_4px_14px_-4px_rgba(47,107,255,0.8)]'
-                      : 'text-fog hover:bg-slate-raised hover:text-ink',
+                    'sidebar-nav-item',
+                    (isActive || (to === '/orders' && location.pathname.startsWith('/orders'))) &&
+                      'active',
                   )
                 }
               >
-                <Icon className="size-3.5" aria-hidden />
-                {label}
+                <Icon className="size-[18px]" aria-hidden />
+                <span className="flex-1">{label}</span>
+                {badge != null && (
+                  <span
+                    className={cn(
+                      'grid size-5 place-items-center rounded-md text-[10px] font-semibold',
+                      'bg-white/10 text-white',
+                    )}
+                  >
+                    {badge}
+                  </span>
+                )}
               </NavLink>
             ))}
           </nav>
+        </div>
 
-          <div className="ml-auto flex items-center gap-2">
-            <span className="hidden items-center gap-2.5 rounded-full border border-hairline bg-slate-surface py-1 pr-3 pl-1 sm:flex">
+        {/* Workspace Section */}
+        <div className="mt-6 px-4">
+          <div className="mb-2 flex items-center justify-between px-2">
+            <p className="text-[10px] font-semibold tracking-[0.12em] text-fog-dim uppercase">
+              Workspace
+            </p>
+            <button
+              type="button"
+              className="grid size-5 place-items-center rounded-md bg-accent/20 text-accent transition-colors hover:bg-accent/30"
+            >
+              <Plus className="size-3" />
+            </button>
+          </div>
+
+          <ul className="space-y-0.5">
+            {WORKSPACES.map((ws) => (
+              <li key={ws.name}>
+                <button
+                  type="button"
+                  className={cn(
+                    'flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[13px] transition-colors',
+                    ws.active
+                      ? 'bg-slate-raised text-ink'
+                      : 'text-fog hover:bg-sidebar-hover hover:text-ink',
+                  )}
+                >
+                  <span
+                    className="size-2 shrink-0 rounded-full"
+                    style={{ backgroundColor: ws.color }}
+                  />
+                  <span className="flex-1 truncate">{ws.name}</span>
+                  <MoreVertical className="size-3.5 text-fog-dim" />
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* Bottom Items */}
+        <div className="mt-auto border-t border-hairline px-4 py-4 space-y-0.5">
+          <button
+            type="button"
+            className="sidebar-nav-item w-full"
+          >
+            <Settings className="size-[18px]" aria-hidden />
+            <span className="flex-1">Settings</span>
+          </button>
+          <button
+            type="button"
+            onClick={signOut}
+            className="sidebar-nav-item w-full"
+          >
+            <LogOut className="size-[18px]" aria-hidden />
+            <span className="flex-1">Log Out</span>
+          </button>
+        </div>
+      </aside>
+
+      {/* ─── Main Content ─── */}
+      <div className="main-content flex min-h-dvh flex-col">
+        {/* Top Bar */}
+        <header className="topbar sticky top-0 z-40">
+          <div className="search-input">
+            <Search className="size-4 text-fog-dim" />
+            <input type="text" placeholder="Type anywhere to search" />
+          </div>
+
+          <div className="ml-auto flex items-center gap-4">
+            {/* Notification bell */}
+            <button
+              type="button"
+              className="relative grid size-9 place-items-center rounded-lg transition-colors hover:bg-slate-raised"
+            >
+              <Bell className="size-[18px] text-fog" />
+              <span className="absolute top-1 right-1.5 size-2 rounded-full bg-alert" />
+            </button>
+
+            {/* Profile */}
+            <button
+              type="button"
+              className="flex items-center gap-3 rounded-xl border border-hairline bg-slate-surface py-1.5 pr-3 pl-1.5 transition-colors hover:bg-slate-raised"
+            >
               <span
                 aria-hidden
-                className="grid size-7 place-items-center rounded-full bg-gradient-to-br from-accent to-violet font-mono text-[11px] font-semibold text-white"
+                className="grid size-8 place-items-center rounded-lg bg-gradient-to-br from-accent to-violet font-mono text-[11px] font-semibold text-white"
               >
                 {initials(staff?.name)}
               </span>
-              <span className="text-right leading-tight">
-                <span className="block text-xs font-medium text-ink">{staff?.name}</span>
-                <span className="block font-mono text-[10px] text-fog-dim">{staff?.email}</span>
+              <span className="hidden text-left leading-tight sm:block">
+                <span className="block text-xs font-medium text-ink">
+                  {staff?.name ?? 'User'}
+                </span>
+                <span className="block text-[10px] text-fog-dim">
+                  {staff?.email ?? 'admin@onway.app'}
+                </span>
               </span>
-            </span>
-            <Button size="sm" variant="ghost" onClick={signOut}>
-              <LogOut className="size-3.5" aria-hidden />
-              <span className="hidden sm:inline">Sign out</span>
-            </Button>
+              <ChevronDown className="size-3.5 text-fog-dim" />
+            </button>
           </div>
-        </div>
-      </header>
+        </header>
 
-      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 sm:py-8">{children}</main>
-
-      <footer className="border-t border-hairline px-4 py-4 sm:px-6">
-        <p className="mx-auto max-w-7xl font-mono text-[11px] text-fog-dim">
-          Onway Package Delivery Tracker · Hono v4 · Drizzle · PostgreSQL (Neon)
-        </p>
-      </footer>
+        {/* Page content */}
+        <main className="flex-1 px-6 py-5">{children}</main>
+      </div>
     </div>
   );
 }

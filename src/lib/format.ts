@@ -13,12 +13,23 @@ const timeOnly = new Intl.DateTimeFormat('en-GB', {
   hour12: false,
 });
 
-export function formatDateTime(iso: string): string {
-  return dateTime.format(new Date(iso));
+/** Returns true when the Date object is valid (not NaN). */
+function isValidDate(d: Date): boolean {
+  return !Number.isNaN(d.getTime());
 }
 
-export function formatTime(iso: string): string {
-  return timeOnly.format(new Date(iso));
+export function formatDateTime(iso: string | null | undefined): string {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  if (!isValidDate(d)) return '—';
+  return dateTime.format(d);
+}
+
+export function formatTime(iso: string | null | undefined): string {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  if (!isValidDate(d)) return '—';
+  return timeOnly.format(d);
 }
 
 export function formatWeight(kg: number): string {
@@ -26,8 +37,12 @@ export function formatWeight(kg: number): string {
 }
 
 /** "3 h ago", "just now" — for the table's created column. */
-export function formatRelative(iso: string): string {
-  const diffMs = Date.now() - new Date(iso).getTime();
+export function formatRelative(iso: string | null | undefined): string {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  if (!isValidDate(d)) return '—';
+
+  const diffMs = Date.now() - d.getTime();
   const minutes = Math.round(diffMs / 60_000);
 
   if (minutes < 1) return 'just now';

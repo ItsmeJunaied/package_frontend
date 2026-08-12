@@ -1,17 +1,12 @@
 import type { LucideIcon } from 'lucide-react';
+import { MoreHorizontal, TrendingUp, TrendingDown, Eye } from 'lucide-react';
 
 import { cn } from '@/lib/cn';
 
 /**
- * A single number that needs no plot.
- *
- * "How many orders are in flight right now" is one value with no shape to it —
- * drawing it as a one-bar chart would add ink without adding information.
- *
- * The accent appears twice and quietly: as a tint behind the icon and as a
- * bloom bleeding in from the top-right corner. A solid coloured tile per stat
- * would turn a row of six into a paint chart, where the loudest colour wins
- * attention instead of the largest number.
+ * A single stat card matching the Manageryo dashboard design.
+ * Shows a colored dot, label, large number, optional subtitle,
+ * and an optional trend/action row at the bottom.
  */
 export function StatTile({
   label,
@@ -21,6 +16,10 @@ export function StatTile({
   icon: Icon,
   accent = 'var(--color-fog-dim)',
   isLoading = false,
+  trend,
+  trendLabel,
+  actionLabel,
+  actionIcon: ActionIcon,
 }: {
   label: string;
   value: string | number;
@@ -30,42 +29,84 @@ export function StatTile({
   icon: LucideIcon;
   accent?: string;
   isLoading?: boolean;
+  /** Percentage trend — positive = up, negative = down */
+  trend?: number;
+  trendLabel?: string;
+  /** Link text at the bottom of the card */
+  actionLabel?: string;
+  /** Custom icon for the action row */
+  actionIcon?: LucideIcon;
 }) {
+  const trendUp = trend != null && trend >= 0;
+  const TrendIcon = trendUp ? TrendingUp : TrendingDown;
+
   return (
-    <div className="panel group relative overflow-hidden rounded-xl border border-hairline p-4">
+    <div className="panel group relative overflow-hidden rounded-2xl border border-hairline p-5 transition-all duration-200 hover:border-fog-dim/30">
+      {/* Subtle glow from top-right */}
       <span
         aria-hidden
-        className="absolute -top-14 -right-10 size-32 rounded-full opacity-60 blur-2xl transition-opacity duration-300 group-hover:opacity-100"
-        style={{ background: `color-mix(in oklab, ${accent} 26%, transparent)` }}
+        className="absolute -top-16 -right-12 size-36 rounded-full opacity-40 blur-3xl transition-opacity duration-300 group-hover:opacity-70"
+        style={{ background: `color-mix(in oklab, ${accent} 30%, transparent)` }}
       />
 
-      <div className="relative flex items-center gap-2">
-        <span
-          className="grid size-6 shrink-0 place-items-center rounded-md"
-          style={{
-            backgroundColor: `color-mix(in oklab, ${accent} 16%, transparent)`,
-            color: accent,
-          }}
-        >
-          <Icon className="size-3.5" aria-hidden />
-        </span>
-        <p className="truncate text-[11px] font-medium tracking-wide text-fog uppercase">{label}</p>
+      {/* Header row: dot + label + more icon */}
+      <div className="relative flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span
+            className="size-2 shrink-0 rounded-full"
+            style={{ backgroundColor: accent }}
+            aria-hidden
+          />
+          <p className="text-xs font-medium text-fog">{label}</p>
+        </div>
+        {ActionIcon ? (
+          <button type="button" className="grid size-6 place-items-center rounded-md text-fog-dim transition-colors hover:bg-slate-raised hover:text-fog">
+            <ActionIcon className="size-4" />
+          </button>
+        ) : (
+          <button type="button" className="grid size-6 place-items-center rounded-md text-fog-dim transition-colors hover:bg-slate-raised hover:text-fog">
+            <MoreHorizontal className="size-4" />
+          </button>
+        )}
       </div>
 
-      {/* Sans rather than the console's usual mono: these are the six numbers
-          the page is *for*, and the wider glyphs carry the size better. Every
-          other number in the app stays mono. */}
+      {/* Large number */}
       <p
         className={cn(
-          'relative mt-3 flex items-baseline gap-1.5 text-[26px] leading-none font-semibold tracking-tight tabular-nums',
-          isLoading && 'skeleton w-20 rounded text-transparent',
+          'relative mt-3 flex items-baseline gap-2 text-[32px] leading-none font-bold tracking-tight tabular-nums',
+          isLoading && 'skeleton w-24 rounded text-transparent',
         )}
       >
         {value}
-        {sub && !isLoading && <span className="text-xs font-normal text-fog-dim">{sub}</span>}
+        {sub && !isLoading && (
+          <span className="text-sm font-normal text-fog-dim">{sub}</span>
+        )}
       </p>
 
-      {hint && <p className="relative mt-2 truncate text-[11px] text-fog-dim">{hint}</p>}
+      {/* Bottom row: trend or hint */}
+      <div className="relative mt-3 flex items-center justify-between">
+        {trend != null && !isLoading ? (
+          <span
+            className={cn(
+              'flex items-center gap-1 text-[11px] font-medium',
+              trendUp ? 'text-delivered' : 'text-alert',
+            )}
+          >
+            <TrendIcon className="size-3" />
+            {Math.abs(trend)}% {trendLabel ?? ''}
+          </span>
+        ) : hint ? (
+          <p className="truncate text-[11px] text-fog-dim">{hint}</p>
+        ) : (
+          <span />
+        )}
+        {actionLabel && !isLoading && (
+          <span className="flex items-center gap-1 text-[11px] font-medium text-fog transition-colors group-hover:text-accent cursor-pointer">
+            {actionLabel}
+            <span className="text-fog-dim">›</span>
+          </span>
+        )}
+      </div>
     </div>
   );
 }
