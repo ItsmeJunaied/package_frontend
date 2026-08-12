@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { ShieldCheck } from 'lucide-react';
+import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
+import { KeyRound } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { InputField } from '@/components/ui/field';
@@ -10,14 +10,27 @@ import { useLogin } from '@/api/queries';
 import { useAuth } from '@/hooks/use-auth';
 import { loginFormSchema, type LoginValues } from '@/lib/schemas';
 
+/**
+ * The demo account, pre-filled so a reviewer can sign in with one click.
+ *
+ * This is a staffed-ops console with exactly one provisioned account and no
+ * sign-up route, so there is nothing to protect by hiding it — the same
+ * credentials are in the README. On anything with real users these fields start
+ * empty and this constant does not exist.
+ */
+const DEMO_CREDENTIALS = {
+  email: 'admin@oneway.com',
+  password: 'Defaulr@oneway',
+} as const;
+
 export function LoginPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const toast = useToast();
-  const { signIn, isAuthenticated, staff } = useAuth();
+  const { signIn, isAuthenticated } = useAuth();
   const login = useLogin();
 
-  const redirectTo = searchParams.get('next') ?? '/orders';
+  const redirectTo = searchParams.get('next') ?? '/dashboard';
 
   const {
     register,
@@ -25,7 +38,7 @@ export function LoginPage() {
     formState: { errors },
   } = useForm<LoginValues>({
     resolver: zodResolver(loginFormSchema),
-    defaultValues: { email: 'dispatcher@onway.test', password: '' },
+    defaultValues: DEMO_CREDENTIALS,
   });
 
   const onSubmit = handleSubmit(async (values) => {
@@ -39,60 +52,61 @@ export function LoginPage() {
     }
   });
 
-  if (isAuthenticated) {
-    return (
-      <div className="mx-auto max-w-md rounded-lg border border-hairline bg-slate-surface p-6 text-center">
-        <ShieldCheck className="mx-auto size-6 text-delivered" aria-hidden />
-        <p className="mt-3 text-sm font-medium">Already signed in as {staff?.name}</p>
-        <Link
-          to="/orders"
-          className="mt-4 inline-flex h-9 items-center rounded-md bg-signal px-4 text-sm font-semibold text-graphite"
-        >
-          Go to orders
-        </Link>
-      </div>
-    );
-  }
+  // Someone who is already signed in has no business on the sign-in screen.
+  if (isAuthenticated) return <Navigate to={redirectTo} replace />;
 
   return (
-    <div className="mx-auto max-w-md space-y-5">
-      <div>
-        <h1 className="text-xl font-semibold tracking-tight">Staff sign in</h1>
-        <p className="mt-1 text-sm text-fog">
-          A token is only required to advance an order's status — browsing, creating and cancelling
-          stay open, which is exactly the scope the brief asks to protect.
+    <div className="grid min-h-dvh place-items-center px-4 py-10">
+      <div className="w-full max-w-sm">
+        <div className="flex items-center gap-3">
+          <span className="grid size-9 shrink-0 place-items-center rounded bg-signal font-mono text-base font-bold text-graphite">
+            O
+          </span>
+          <div className="leading-tight">
+            <p className="text-base font-semibold tracking-tight">Onway</p>
+            <p className="font-mono text-[10px] tracking-widest text-fog-dim uppercase">
+              Delivery control
+            </p>
+          </div>
+        </div>
+
+        <h1 className="mt-7 text-xl font-semibold tracking-tight">Staff sign in</h1>
+        <p className="mt-1.5 text-sm text-fog">
+          Every order endpoint is behind a JWT. Sign in to reach the console.
+        </p>
+
+        <form
+          onSubmit={onSubmit}
+          noValidate
+          className="mt-5 space-y-4 rounded-lg border border-hairline bg-slate-surface p-5"
+        >
+          <InputField
+            label="Email"
+            type="email"
+            autoComplete="username"
+            autoFocus
+            error={errors.email?.message}
+            {...register('email')}
+          />
+          <InputField
+            label="Password"
+            type="password"
+            autoComplete="current-password"
+            error={errors.password?.message}
+            {...register('password')}
+          />
+          <Button type="submit" variant="primary" className="w-full" loading={login.isPending}>
+            {!login.isPending && <KeyRound className="size-4" aria-hidden />}
+            {login.isPending ? 'Signing in…' : 'Sign in'}
+          </Button>
+        </form>
+
+        <p className="mt-4 rounded-md border border-hairline bg-graphite-deep px-4 py-3 font-mono text-[11px] leading-relaxed text-fog-dim">
+          <span className="text-fog">Demo account</span> — already filled in.
+          <br />
+          {DEMO_CREDENTIALS.email} / {DEMO_CREDENTIALS.password}
         </p>
       </div>
-
-      <form
-        onSubmit={onSubmit}
-        noValidate
-        className="space-y-4 rounded-lg border border-hairline bg-slate-surface p-5"
-      >
-        <InputField
-          label="Email"
-          type="email"
-          autoComplete="username"
-          error={errors.email?.message}
-          {...register('email')}
-        />
-        <InputField
-          label="Password"
-          type="password"
-          autoComplete="current-password"
-          error={errors.password?.message}
-          {...register('password')}
-        />
-        <Button type="submit" variant="primary" className="w-full" loading={login.isPending}>
-          Sign in
-        </Button>
-      </form>
-
-      <p className="rounded-md border border-hairline bg-graphite-deep px-4 py-3 font-mono text-[11px] text-fog-dim">
-        Demo account (created by <span className="text-fog">npm run db:seed</span>):
-        <br />
-        dispatcher@onway.test / onway-demo-2026
-      </p>
     </div>
   );
 }

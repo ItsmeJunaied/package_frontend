@@ -1,6 +1,14 @@
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react';
 
-import { getToken, setToken } from '@/api/client';
+import { getToken, setToken, UNAUTHORIZED_EVENT } from '@/api/client';
 import type { Session } from '@/api/queries';
 
 type StaffProfile = Session['staff'];
@@ -32,9 +40,9 @@ function readStoredProfile(): StaffProfile | null {
 }
 
 /**
- * Session state for the JWT bonus (DESIGN.md §11). Only `PATCH /orders/:id/status`
- * is protected, so the whole app stays usable while signed out — signing in is
- * what unlocks moving an order forward.
+ * Session state (DESIGN.md §11). Every `/orders` route on the API requires a
+ * token, so this is the gate for the whole console, not just for advancing a
+ * status — `RequireAuth` reads `isAuthenticated` and nothing renders without it.
  */
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [staff, setStaff] = useState<StaffProfile | null>(readStoredProfile);
@@ -60,6 +68,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     setStaff(null);
   }, []);
+
+  /* A token the server refuses is not a session. Drop it the moment we find out
+     rather than leaving the user staring at 401s on every panel. */
+  useEffect(() => {
+    window.addEventListener(UNAUTHORIZED_EVENT, signOut);
+    return () => window.removeEventListener(UNAUTHORIZED_EVENT, signOut);
+  }, [signOut]);
 
   const value = useMemo(
     () => ({ staff, isAuthenticated: staff !== null, signIn, signOut }),

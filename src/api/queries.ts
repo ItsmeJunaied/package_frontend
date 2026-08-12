@@ -17,6 +17,7 @@ export type Order = OrdersPage['data'][number];
 export type OrderDetail = InferResponseType<(typeof client.orders)[':id']['$get'], 200>;
 export type StatusHistoryEntry = OrderDetail['statusHistory'][number];
 export type Session = InferResponseType<typeof client.auth.login.$post, 200>;
+export type OrderStats = InferResponseType<typeof client.orders.stats.$get, 200>;
 
 export interface OrdersFilter {
   status?: OrderStatus;
@@ -30,7 +31,24 @@ export const orderKeys = {
   all: ['orders'] as const,
   list: (filter: OrdersFilter) => [...orderKeys.all, 'list', filter] as const,
   detail: (id: string) => [...orderKeys.all, 'detail', id] as const,
+  stats: (days: number) => [...orderKeys.all, 'stats', days] as const,
 };
+
+/**
+ * GET /orders/stats — the dashboard's single request.
+ *
+ * Everything the page draws comes from here rather than from counting a page
+ * of `useOrders` in the browser, which would silently under-report as soon as
+ * the table outgrows one page. Because the key sits under `orderKeys.all`, any
+ * mutation below invalidates the charts along with the table.
+ */
+export function useStats(days = 14) {
+  return useQuery({
+    queryKey: orderKeys.stats(days),
+    queryFn: () => unwrap(client.orders.stats.$get({ query: { days: String(days) } })),
+    placeholderData: (previous) => previous,
+  });
+}
 
 export function useOrders(filter: OrdersFilter, options?: { refetchInterval?: number }) {
   return useQuery({

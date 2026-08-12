@@ -1,14 +1,5 @@
-import { Link, useNavigate, useParams } from 'react-router-dom';
-import {
-  ArrowLeft,
-  ArrowRight,
-  Ban,
-  Lock,
-  MapPin,
-  PackageX,
-  Scale,
-  User,
-} from 'lucide-react';
+import { Link, useParams } from 'react-router-dom';
+import { ArrowLeft, ArrowRight, Ban, MapPin, PackageX, Scale, User } from 'lucide-react';
 
 import { StatusBadge } from '@/components/status-badge';
 import { StatusTimeline } from '@/components/status-timeline';
@@ -18,15 +9,12 @@ import { EmptyState, ErrorState } from '@/components/ui/states';
 import { useToast } from '@/components/ui/toast';
 import { ApiError } from '@/api/client';
 import { useCancelOrder, useOrder, useUpdateStatus } from '@/api/queries';
-import { useAuth } from '@/hooks/use-auth';
 import { formatDateTime, formatWeight } from '@/lib/format';
 import { canCancel, nextStatus, STATUS_META, type OrderStatus } from '@/lib/status';
 
 export function OrderDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const toast = useToast();
-  const { isAuthenticated } = useAuth();
 
   const query = useOrder(id);
   const updateStatus = useUpdateStatus();
@@ -110,9 +98,11 @@ export function OrderDetailPage() {
       });
       toast.push('success', `Moved to ${STATUS_META[next].label.toLowerCase()}`);
     } catch (error) {
+      // A 401 here means the token expired mid-session. `AuthProvider` is
+      // already listening for that and will drop the session, which bounces us
+      // to the sign-in screen — all this needs to do is say why.
       if (error instanceof ApiError && error.status === 401) {
-        toast.push('error', 'Sign in required', 'Status updates are restricted to staff accounts.');
-        navigate(`/login?next=/orders/${order.id}`);
+        toast.push('error', 'Session expired', 'Sign in again to move this order forward.');
         return;
       }
       toast.push('error', 'Status update failed', (error as Error).message);
@@ -153,11 +143,7 @@ export function OrderDetailPage() {
         <div className="flex flex-wrap items-center gap-2">
           {next ? (
             <Button variant="primary" onClick={() => void advance()} loading={busy}>
-              {isAuthenticated ? (
-                <ArrowRight className="size-4" aria-hidden />
-              ) : (
-                <Lock className="size-3.5" aria-hidden />
-              )}
+              <ArrowRight className="size-4" aria-hidden />
               Mark {STATUS_META[next].label.toLowerCase()}
             </Button>
           ) : (
@@ -174,16 +160,6 @@ export function OrderDetailPage() {
           )}
         </div>
       </header>
-
-      {!isAuthenticated && next && (
-        <p className="rounded-md border border-signal/25 bg-signal/8 px-4 py-2.5 text-xs text-signal">
-          Status updates require a staff token —{' '}
-          <Link to={`/login?next=/orders/${order.id}`} className="underline underline-offset-2">
-            sign in
-          </Link>{' '}
-          to move this order forward. Cancelling stays open, matching the brief's auth scope.
-        </p>
-      )}
 
       <div className="grid gap-5 lg:grid-cols-[1fr_20rem] lg:items-start">
         <StatusTimeline order={order} />

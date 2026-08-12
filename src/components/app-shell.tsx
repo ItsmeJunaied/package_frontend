@@ -1,24 +1,26 @@
 import { Link, NavLink, useLocation } from 'react-router-dom';
-import { LogIn, LogOut, PackageSearch, Truck } from 'lucide-react';
+import { LayoutDashboard, LogOut, PackageSearch, Truck } from 'lucide-react';
 
 import { Button } from './ui/button';
 import { cn } from '@/lib/cn';
 import { useAuth } from '@/hooks/use-auth';
 
 const NAV = [
+  { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/orders', label: 'Orders', icon: PackageSearch },
-  { to: '/courier', label: 'Courier view', icon: Truck },
+  { to: '/courier', label: 'Courier', icon: Truck },
 ];
 
+/** Only ever rendered inside `RequireAuth`, so `staff` is always present here. */
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const { staff, isAuthenticated, signOut } = useAuth();
+  const { staff, signOut } = useAuth();
   const location = useLocation();
 
   return (
     <div className="flex min-h-dvh flex-col">
       <header className="sticky top-0 z-40 border-b border-hairline bg-graphite/85 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-7xl items-center gap-4 px-4 sm:px-6">
-          <Link to="/orders" className="flex items-center gap-2.5">
+          <Link to="/dashboard" className="flex items-center gap-2.5">
             <span className="grid size-7 place-items-center rounded bg-signal font-mono text-sm font-bold text-graphite">
               O
             </span>
@@ -51,26 +53,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </nav>
 
           <div className="ml-auto flex items-center gap-2">
-            {isAuthenticated ? (
-              <>
-                <span className="hidden text-right sm:block">
-                  <span className="block text-xs font-medium text-[#e6eaf0]">{staff?.name}</span>
-                  <span className="block font-mono text-[10px] text-fog-dim">{staff?.email}</span>
-                </span>
-                <Button size="sm" variant="ghost" onClick={signOut}>
-                  <LogOut className="size-3.5" aria-hidden />
-                  <span className="hidden sm:inline">Sign out</span>
-                </Button>
-              </>
-            ) : (
-              <Link
-                to="/login"
-                className="inline-flex h-8 items-center gap-1.5 rounded-md border border-hairline bg-slate-raised px-3 text-xs font-medium transition-colors hover:border-fog-dim"
-              >
-                <LogIn className="size-3.5" aria-hidden />
-                Staff sign in
-              </Link>
-            )}
+            <span className="hidden text-right sm:block">
+              <span className="block text-xs font-medium text-[#e6eaf0]">{staff?.name}</span>
+              <span className="block font-mono text-[10px] text-fog-dim">{staff?.email}</span>
+            </span>
+            <Button size="sm" variant="ghost" onClick={signOut}>
+              <LogOut className="size-3.5" aria-hidden />
+              <span className="hidden sm:inline">Sign out</span>
+            </Button>
           </div>
         </div>
       </header>

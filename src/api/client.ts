@@ -26,6 +26,17 @@ export function setToken(token: string | null): void {
 }
 
 /**
+ * Broadcast when the API rejects our token — expired, revoked, or signed by a
+ * server that has since rotated its secret.
+ *
+ * An event rather than a direct call because this module is deliberately
+ * React-free; `AuthProvider` subscribes and tears the session down, which sends
+ * `RequireAuth` back to the login screen. Without this the app sits there
+ * showing an error on every panel while still believing it is signed in.
+ */
+export const UNAUTHORIZED_EVENT = 'onway:unauthorized';
+
+/**
  * The typed RPC client. Every path, method, request body and response shape is
  * inferred from the backend's `AppType` — no OpenAPI step, no generated SDK,
  * and a route signature change breaks the build here rather than in production.
@@ -89,6 +100,13 @@ export async function unwrap<R extends AnyJsonResponse>(
 
   if (!res.ok) {
     const body = (await res.json().catch(() => null)) as ErrorEnvelope | null;
+
+    // Don't fire on the login request itself — a wrong password is a 401 the
+    // form handles, not a session that just died.
+    if (res.status === 401 && getToken()) {
+      window.dispatchEvent(new Event(UNAUTHORIZED_EVENT));
+    }
+
     throw new ApiError(
       body?.error?.message ?? `Request failed with status ${res.status}`,
       res.status,
